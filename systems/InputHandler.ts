@@ -20,6 +20,7 @@ export class InputHandler {
     private onCursorDetected: (results: HandResult[]) => void;
     private width: number;
     private height: number;
+    private isCleanedUp: boolean = false;
 
     // Sensitivity Config
     // Multiplier: How much head movement amplifies cursor movement
@@ -45,6 +46,8 @@ export class InputHandler {
     }
 
     async initialize() {
+        if (this.isCleanedUp) return;
+
         if (!window.FaceMesh) {
             console.warn("MediaPipe FaceMesh not loaded, retrying...");
             setTimeout(() => this.initialize(), 500);
@@ -65,6 +68,10 @@ export class InputHandler {
         this.faceMesh.onResults(this.handleResults);
 
         await this.startCamera();
+        
+        // Critical Check: If cleanup happened while camera was starting, stop here
+        if (this.isCleanedUp) return;
+
         this.processLoop();
     }
 
@@ -106,6 +113,7 @@ export class InputHandler {
     };
 
     private async startCamera() {
+         if (this.isCleanedUp) return;
          try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
@@ -115,15 +123,24 @@ export class InputHandler {
                     frameRate: { ideal: 30 }
                 }
             });
+            
+            if (this.isCleanedUp) {
+                // If cleaned up during request, stop tracks immediately
+                stream.getTracks().forEach(t => t.stop());
+                return;
+            }
+
             this.video.srcObject = stream;
             await this.video.play();
          } catch (err) {
              console.error("Camera init failed:", err);
-             alert("无法访问摄像头");
+             // alert("无法访问摄像头"); // Suppress alert to avoid annoyance in loop
          }
     }
 
     private processLoop = async () => {
+        if (this.isCleanedUp) return;
+
         if (this.video && this.faceMesh && !this.isProcessing && this.video.readyState >= 2) {
             this.isProcessing = true;
             try {
@@ -137,9 +154,13 @@ export class InputHandler {
     }
 
     cleanup() {
+        this.isCleanedUp = true;
         cancelAnimationFrame(this.animationFrameId);
-        if (this.video.srcObject) {
+        if (this.video && this.video.srcObject) {
             (this.video.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+        }
+        if (this.faceMesh) {
+            this.faceMesh.close();
         }
     }
 }

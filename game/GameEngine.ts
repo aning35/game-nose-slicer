@@ -209,15 +209,50 @@ export class GameEngine {
     }
 
     private spawnEntity() {
-        const isBomb = Math.random() < 0.15 + (this.difficultyMultiplier * 0.05);
+        // Increased bomb probability based on difficulty
+        const isBomb = Math.random() < 0.20 + (this.difficultyMultiplier * 0.05);
         const typeData = isBomb ? BOMB_TYPE : FRUIT_TYPES[Math.floor(Math.random() * FRUIT_TYPES.length)];
         
-        const margin = 100;
-        const x = margin + Math.random() * (this.width - margin * 2);
-        const y = this.height + 50; 
+        // Randomize spawn source: 
+        // 0.0 - 0.6: Bottom
+        // 0.6 - 0.8: Left
+        // 0.8 - 1.0: Right
+        const spawnSource = Math.random();
+        
+        let x, y, vx, vy;
 
-        const vx = (Math.random() - 0.5) * 4; 
-        const vy = -(Math.random() * 5 + 8 + (this.difficultyMultiplier * 0.5)); 
+        if (spawnSource < 0.6) {
+            // BOTTOM SPAWN (60%)
+            const margin = 100;
+            x = margin + Math.random() * (this.width - margin * 2);
+            y = this.height + 60;
+            
+            // Bias horizontal velocity towards center
+            const centerBias = (this.width/2 - x) * 0.015;
+            vx = (Math.random() - 0.5) * 10 + centerBias;
+            // High upward velocity
+            vy = -(Math.random() * 7 + 16 + (this.difficultyMultiplier * 0.5)); 
+        } else if (spawnSource < 0.8) {
+            // LEFT SPAWN (20%)
+            x = -60;
+            // Spawn lower half
+            y = this.height * (0.5 + Math.random() * 0.4); 
+            // Shoot Right
+            vx = Math.random() * 10 + 10 + (this.difficultyMultiplier); 
+            // Arc Up
+            vy = -(Math.random() * 10 + 12); 
+        } else {
+            // RIGHT SPAWN (20%)
+            x = this.width + 60;
+            y = this.height * (0.5 + Math.random() * 0.4);
+            // Shoot Left
+            vx = -(Math.random() * 10 + 10 + (this.difficultyMultiplier));
+            vy = -(Math.random() * 10 + 12);
+        }
+
+        // Add slight randomness to prevent perfect stacking if multiple spawn same frame
+        x += (Math.random() - 0.5) * 10;
+        y += (Math.random() - 0.5) * 10;
 
         const entity: GameEntity = {
             id: generateId(),
@@ -227,7 +262,7 @@ export class GameEngine {
             vx,
             vy,
             rotation: Math.random() * Math.PI,
-            rotationSpeed: (Math.random() - 0.5) * 0.1,
+            rotationSpeed: (Math.random() - 0.5) * 0.4, // Fast rotation
             radius: 60,
             emoji: typeData.emoji,
             color: typeData.color,
@@ -436,9 +471,26 @@ export class GameEngine {
         if (this.gameState === GameState.PLAYING) {
             this.spawnTimer--;
             if (this.spawnTimer <= 0) {
-                this.spawnEntity();
-                this.difficultyMultiplier = Math.min(3, this.difficultyMultiplier + 0.001);
-                this.spawnTimer = Math.max(20, SPAWN_RATE_INITIAL / this.difficultyMultiplier);
+                // Determine burst size: Base 1, chance for more
+                let spawnCount = 1;
+                
+                // 30% chance for a burst (2-3 items)
+                if (Math.random() < 0.3 + (this.difficultyMultiplier * 0.05)) {
+                    spawnCount += Math.floor(Math.random() * 2) + 1;
+                }
+                
+                // High level chaos
+                if (this.difficultyMultiplier > 1.8 && Math.random() < 0.2) {
+                    spawnCount += 2;
+                }
+
+                for (let i = 0; i < spawnCount; i++) {
+                    this.spawnEntity();
+                }
+
+                this.difficultyMultiplier = Math.min(3, this.difficultyMultiplier + 0.002);
+                // Reset timer (randomized slightly to avoid rhythm monotony)
+                this.spawnTimer = Math.max(15, (SPAWN_RATE_INITIAL / this.difficultyMultiplier) * (0.7 + Math.random() * 0.6));
             }
 
             if (this.comboTimer > 0) this.comboTimer--;
@@ -459,9 +511,16 @@ export class GameEngine {
             entity.y += entity.vy;
             entity.vy += GRAVITY;
             entity.rotation += entity.rotationSpeed;
+            // Mark sliced if it falls off bottom
             if (entity.y > this.height + 100 && entity.vy > 0) entity.isSliced = true;
         });
-        this.entities = this.entities.filter(e => e.y <= this.height + 200 && !e.isSliced);
+
+        // Filter entities that are sliced OR fall off the screen (Bottom) OR fly off sides too far
+        this.entities = this.entities.filter(e => {
+            const outOfBoundsBottom = e.y > this.height + 200;
+            const outOfBoundsSides = e.x < -200 || e.x > this.width + 200;
+            return !(e.isSliced || outOfBoundsBottom || outOfBoundsSides);
+        });
 
         this.particles.forEach(p => {
             p.x += p.vx;
@@ -507,7 +566,8 @@ export class GameEngine {
             renderFlicker = true;
         } else if (isRainbow) {
             renderIsRainbow = true;
-            renderWidthMult = 1.2;
+            // Pulse the rainbow width based on time
+            renderWidthMult = 1.3 + Math.sin(Date.now() / 150) * 0.3;
             renderColor = undefined; // Ensure rainbow handles the color
         } else if (this.trailEffect.type === 'fruit') {
             renderColor = this.trailEffect.color;

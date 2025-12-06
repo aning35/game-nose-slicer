@@ -1,9 +1,9 @@
 
-export const GRAVITY = 0.035; // Very low gravity (Matrix style) for head control ease
-export const FRICTION = 0.99;
+export const GRAVITY = 0.08; // Increased gravity for faster, snappier gameplay
+export const FRICTION = 0.995;
 export const BLADE_LIFE = 20; // Long trail
 export const BLADE_WIDTH = 12; // Thick robust blade
-export const SPAWN_RATE_INITIAL = 100; // Slower spawn rate
+export const SPAWN_RATE_INITIAL = 35; // Much faster spawn rate (was 100)
 
 // Hitbox size for nose (larger than finger)
 export const HITBOX_RADIUS = 80;
