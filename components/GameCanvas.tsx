@@ -46,6 +46,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
 
   useEffect(() => {
     // Only initialize if not already initialized
+    // Removing the dependency array allows this to retry if refs are null on first render
     if (canvasRef.current && videoRef.current && !engineRef.current) {
         engineRef.current = new GameEngine(
             canvasRef.current,
@@ -66,15 +67,25 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
                 onCalibrationProgress: (p) => setCalibrationProgress(p)
             }
         );
+        
+        // Force state sync immediately after creation
+        engineRef.current.setGameState(gameState);
     }
 
+    return () => {
+        // We do NOT destroy the engine on re-renders, only on unmount
+        // This is handled because we check !engineRef.current before creating
+    };
+  }); 
+
+  // Cleanup on unmount only
+  useEffect(() => {
     return () => {
         if (engineRef.current) {
             engineRef.current.cleanup();
             engineRef.current = null;
         }
-    };
-    // Empty dependency array ensures this runs ONCE on mount
+    }
   }, []);
 
   // Sync GameState

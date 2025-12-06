@@ -1,3 +1,4 @@
+
 import { GameEntity, Particle, SlicePoint, GameState, Point, Splat, FloatingText, CameraShake, GameCallbacks } from '../types';
 import { 
   GRAVITY, 
@@ -325,22 +326,22 @@ export class GameEngine {
                     decay: 0.02
                 });
             }
-            // Fire
-            for (let i = 0; i < 20; i++) {
+            // Fire (Spectrum)
+            for (let i = 0; i < 30; i++) {
                 this.particles.push({
                     id: generateId(),
                     x, y,
                     vx: (Math.random() - 0.5) * 30,
                     vy: (Math.random() - 0.5) * 30,
                     life: 0.8,
-                    color: '#ff4500',
+                    color: Math.random() > 0.5 ? '#ff4500' : '#ff8800',
                     size: Math.random() * 10 + 5,
                     gravity: 0,
                     decay: 0.05
                 });
             }
             // Sparks
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 20; i++) {
                 this.particles.push({
                     id: generateId(),
                     x, y,
@@ -354,23 +355,48 @@ export class GameEngine {
                 });
             }
         } else {
-            const particleCount = 30;
-            for (let i = 0; i < particleCount; i++) {
-                const isMist = Math.random() > 0.6;
-                const pColor = isMist ? 'rgba(255, 255, 255, 0.8)' : color;
-                const pSize = isMist ? Math.random() * 5 + 2 : Math.random() * 12 + 4;
-                const pDecay = isMist ? 0.04 : Math.random() * 0.03 + 0.01;
-                
+            // 1. Heavy Juice Core
+            for (let i = 0; i < 15; i++) {
                 this.particles.push({
                     id: generateId(),
                     x, y,
-                    vx: (Math.random() - 0.5) * (isMist ? 20 : 25),
-                    vy: (Math.random() - 0.5) * (isMist ? 20 : 25),
-                    life: 1.0,
-                    color: pColor, 
-                    size: pSize,
-                    gravity: isMist ? 0.1 : 0.25,
-                    decay: pDecay
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 0.5) * 15,
+                    life: 1.0 + Math.random() * 0.5,
+                    color: color,
+                    size: Math.random() * 12 + 6,
+                    gravity: 0.2,
+                    decay: 0.01 + Math.random() * 0.02
+                });
+            }
+
+            // 2. Light Mist/Spray
+            for (let i = 0; i < 15; i++) {
+                this.particles.push({
+                    id: generateId(),
+                    x, y,
+                    vx: (Math.random() - 0.5) * 35,
+                    vy: (Math.random() - 0.5) * 35,
+                    life: 0.8,
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    size: Math.random() * 6 + 2,
+                    gravity: 0.1,
+                    decay: 0.03
+                });
+            }
+
+            // 3. High Velocity Droplets
+            for (let i = 0; i < 10; i++) {
+                 this.particles.push({
+                    id: generateId(),
+                    x, y,
+                    vx: (Math.random() - 0.5) * 50,
+                    vy: (Math.random() - 0.5) * 50,
+                    life: 0.6,
+                    color: color,
+                    size: Math.random() * 5 + 2,
+                    gravity: 0.3,
+                    decay: 0.05
                 });
             }
         }
@@ -482,6 +508,7 @@ export class GameEngine {
         } else if (isRainbow) {
             renderIsRainbow = true;
             renderWidthMult = 1.2;
+            renderColor = undefined; // Ensure rainbow handles the color
         } else if (this.trailEffect.type === 'fruit') {
             renderColor = this.trailEffect.color;
             renderWidthMult = 1.5;
