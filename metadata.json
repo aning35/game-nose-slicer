@@ -1,0 +1,7 @@
+{
+  "name": "Nose Slicer",
+  "description": "一款快节奏的街机游戏，你需要切碎掉落的水果来得分，同时避免接触炸弹。具有流畅的动画、粒子效果和灵敏的摄像头动作控制。",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
