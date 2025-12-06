@@ -1,5 +1,6 @@
 
-import { GameEntity, Particle, SlicePoint, Point, Splat, FloatingText, GameState } from '../types';
+
+import { GameEntity, Particle, SlicePoint, Point, Splat, FloatingText, GameState, EffectType } from '../types';
 import { BLADE_WIDTH, TRANSLATIONS } from '../constants';
 import { normalizeVector, perpendicularVector } from '../utils/math';
 
@@ -52,7 +53,7 @@ export class Renderer {
     }
 
     // Draw background splatter "Juice"
-    drawSplats(splats: Splat[]) {
+    drawSplats(splats: Splat[], isPixelated: boolean = false) {
         splats.forEach(s => {
             this.ctx.save();
             this.ctx.translate(s.x, s.y);
@@ -60,25 +61,42 @@ export class Renderer {
             this.ctx.globalAlpha = s.alpha;
             this.ctx.fillStyle = s.color;
             
-            // Draw an organic blob shape
-            this.ctx.beginPath();
-            this.ctx.arc(0, 0, s.size, 0, Math.PI * 2);
-            this.ctx.arc(s.size * 0.5, s.size * 0.5, s.size * 0.6, 0, Math.PI * 2);
-            this.ctx.arc(-s.size * 0.4, s.size * 0.6, s.size * 0.5, 0, Math.PI * 2);
-            this.ctx.fill();
+            if (isPixelated) {
+                // Draw splats as blocks
+                const size = s.size;
+                this.ctx.fillRect(-size/2, -size/2, size, size);
+                this.ctx.fillRect(-size/3, -size/1.5, size/1.5, size/3);
+                this.ctx.fillRect(-size/3, size/3, size/1.5, size/3);
+            } else {
+                // Draw an organic blob shape
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, s.size, 0, Math.PI * 2);
+                this.ctx.arc(s.size * 0.5, s.size * 0.5, s.size * 0.6, 0, Math.PI * 2);
+                this.ctx.arc(-s.size * 0.4, s.size * 0.6, s.size * 0.5, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
             
             this.ctx.restore();
         });
         this.ctx.globalAlpha = 1.0;
     }
 
-    drawEntities(entities: GameEntity[]) {
+    drawEntities(entities: GameEntity[], activeEffectType: EffectType = EffectType.NONE) {
+        const isPixelated = activeEffectType === EffectType.PIXEL_STORM;
+        const isGhost = activeEffectType === EffectType.GHOST_MODE;
+
         entities.forEach(entity => {
             this.ctx.save();
             this.ctx.translate(entity.x, entity.y);
             this.ctx.rotate(entity.rotation);
             this.ctx.scale(entity.scale, entity.scale);
             
+            // Ghost Mode Opacity
+            if (isGhost) {
+                const fade = (Math.sin(Date.now() / 200 + parseFloat(entity.id) * 10) + 1) / 2;
+                this.ctx.globalAlpha = 0.1 + fade * 0.6; // Oscilate between 0.1 and 0.7
+            }
+
             this.ctx.shadowColor = 'rgba(0,0,0,0.5)';
             this.ctx.shadowBlur = 20;
             
@@ -93,24 +111,49 @@ export class Renderer {
                 this.ctx.stroke();
             }
 
-            this.ctx.font = `${entity.radius * 2}px "Segoe UI Emoji", sans-serif`;
-            this.ctx.textAlign = 'center';
-            this.ctx.textBaseline = 'middle';
-            this.ctx.fillText(entity.emoji, 0, 8);
+            if (isPixelated) {
+                // Draw as blocky square
+                this.ctx.fillStyle = entity.color;
+                // Simple 8-bit representation: A colored square with a darker inner square
+                const size = entity.radius * 1.5;
+                this.ctx.fillRect(-size/2, -size/2, size, size);
+                
+                this.ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                this.ctx.fillRect(-size/4, -size/4, size/2, size/2);
+                
+                // Maybe a small "glint"
+                this.ctx.fillStyle = 'white';
+                this.ctx.fillRect(-size/3, -size/3, size/6, size/6);
+
+            } else {
+                this.ctx.font = `${entity.radius * 2}px "Segoe UI Emoji", sans-serif`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText(entity.emoji, 0, 8);
+            }
+
             this.ctx.restore();
         });
+        
+        this.ctx.globalAlpha = 1.0;
     }
 
-    drawParticles(particles: Particle[]) {
+    drawParticles(particles: Particle[], isPixelated: boolean = false) {
         particles.forEach(p => {
             this.ctx.globalAlpha = Math.max(0, p.life);
             this.ctx.fillStyle = p.color;
             this.ctx.save();
             this.ctx.shadowColor = p.color;
             this.ctx.shadowBlur = 10;
-            this.ctx.beginPath();
-            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            this.ctx.fill();
+            
+            if (isPixelated) {
+                const size = p.size * 2;
+                this.ctx.fillRect(p.x - size/2, p.y - size/2, size, size);
+            } else {
+                this.ctx.beginPath();
+                this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
             this.ctx.restore();
             this.ctx.globalAlpha = 1.0;
         });

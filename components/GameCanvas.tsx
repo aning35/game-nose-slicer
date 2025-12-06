@@ -15,6 +15,7 @@ interface GameCanvasProps {
   onCalibrationComplete?: () => void;
   setScore: React.Dispatch<React.SetStateAction<number>>;
   onCursorMove: (x: number, y: number) => void;
+  onActiveEffectChange: (effect: ActiveEffectState | null) => void;
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
@@ -27,7 +28,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   onGameOver, 
   onCalibrationComplete,
   setScore,
-  onCursorMove
+  onCursorMove,
+  onActiveEffectChange
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -45,6 +47,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const onGameOverRef = useRef(onGameOver);
   const onCalibrationCompleteRef = useRef(onCalibrationComplete);
   const onCursorMoveRef = useRef(onCursorMove);
+  const onActiveEffectChangeRef = useRef(onActiveEffectChange);
 
   // Update refs when props change
   useEffect(() => {
@@ -52,7 +55,8 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     onGameOverRef.current = onGameOver;
     onCalibrationCompleteRef.current = onCalibrationComplete;
     onCursorMoveRef.current = onCursorMove;
-  }, [onScoreUpdate, onGameOver, onCalibrationComplete, onCursorMove]);
+    onActiveEffectChangeRef.current = onActiveEffectChange;
+  }, [onScoreUpdate, onGameOver, onCalibrationComplete, onCursorMove, onActiveEffectChange]);
 
   useEffect(() => {
     if (canvasRef.current && videoRef.current && !engineRef.current) {
@@ -73,7 +77,10 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
                 onCursorActive: (active) => setIsCursorActive(active),
                 onCalibrationProgress: (p) => setCalibrationProgress(p),
                 onCursorMove: (x, y) => onCursorMoveRef.current(x, y),
-                onEffectChange: (effect) => setActiveEffect(effect)
+                onEffectChange: (effect) => {
+                    setActiveEffect(effect);
+                    onActiveEffectChangeRef.current(effect);
+                }
             }
         );
         

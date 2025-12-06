@@ -1,4 +1,5 @@
 
+
 export type EntityType = 'fruit' | 'bomb' | 'special';
 
 export enum Difficulty {
@@ -23,10 +24,12 @@ export enum EffectType {
   FREEZE = 'FREEZE',               // 12. 10s Stop physics
   FRENZY = 'FRENZY',               // 13. 10s Fast spawns
   BONUS_POINTS = 'BONUS_POINTS',   // 14. Instant points
-  WIDE_BLADE = 'WIDE_BLADE',       // 15. 10s Wider trail
+  CHAIN_REACTION = 'CHAIN_REACTION', // 15. 10s Chain lightning slice
   ANTI_GRAVITY = 'ANTI_GRAVITY',   // 16. 10s Reverse gravity
   DISCO_FEVER = 'DISCO_FEVER',     // 17. 10s Flashing BG + 3x Score
-  GOLDEN_SNITCH = 'GOLDEN_SNITCH'  // 18. Hard to catch, 100pts
+  GOLDEN_SNITCH = 'GOLDEN_SNITCH', // 18. Hard to catch, 100pts
+  GHOST_MODE = 'GHOST_MODE',       // 19. 10s Fruits fade in/out
+  PIXEL_STORM = 'PIXEL_STORM'      // 20. 10s 8-bit visuals
 }
 
 export interface ActiveEffectState {
@@ -106,6 +109,7 @@ export interface CameraShake {
 
 export enum GameState {
   MENU = 'MENU',
+  INSTRUCTIONS = 'INSTRUCTIONS',
   CALIBRATION = 'CALIBRATION',
   PLAYING = 'PLAYING',
   GAME_OVER = 'GAME_OVER'

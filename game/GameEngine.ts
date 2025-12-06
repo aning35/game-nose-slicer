@@ -1,4 +1,5 @@
 
+
 import { GameEntity, SlicePoint, GameState, Point, CameraShake, GameCallbacks, Difficulty, EffectType, ActiveEffectState } from '../types';
 import { 
   BLADE_LIFE, 
@@ -221,7 +222,10 @@ export class GameEngine {
         let currentHitbox = HITBOX_RADIUS;
         if (this.activeEffect?.type === EffectType.GIANT_CURSOR) currentHitbox *= 2.5;
         if (this.activeEffect?.type === EffectType.TINY_CURSOR) currentHitbox *= 0.4;
-        if (this.activeEffect?.type === EffectType.WIDE_BLADE) currentHitbox *= 1.5;
+        
+        // Chain reaction doesn't increase cursor, it increases logic area in sliceEntity... 
+        // actually no, sliceEntity is only called IF collision happened.
+        // So for chain reaction we rely on the first hit.
 
         this.entityManager.entities.forEach(entity => {
             if (entity.isSliced) return;
@@ -249,6 +253,7 @@ export class GameEngine {
     }
 
     private sliceEntity(entity: GameEntity) {
+        if (entity.isSliced) return;
         entity.isSliced = true;
         
         // Visuals
@@ -298,6 +303,25 @@ export class GameEngine {
             this.particleSystem.createSplat(entity.x, entity.y, entity.color);
             if (this.trailEffect.type !== 'bomb' && this.trailEffect.type !== 'special') {
                 this.trailEffect = { type: 'fruit', timer: 8, color: entity.color };
+            }
+
+            // CHAIN REACTION LOGIC
+            if (this.activeEffect?.type === EffectType.CHAIN_REACTION) {
+                this.entityManager.entities.forEach(neighbor => {
+                    if (!neighbor.isSliced && neighbor.type !== 'bomb') {
+                         const dist = Math.hypot(entity.x - neighbor.x, entity.y - neighbor.y);
+                         if (dist < 300) { // Chain radius
+                             // Visual electric arc
+                             // We don't have a drawLine method easily accessible in logic, but we can spawn particles
+                             const midX = (entity.x + neighbor.x) / 2;
+                             const midY = (entity.y + neighbor.y) / 2;
+                             this.particleSystem.spawnSparkles(midX, midY);
+                             // Recursive slice? No, just slice immediate neighbors to prevent infinite loop/stack overflow if not careful
+                             // But wait, sliceEntity checks isSliced, so recursion is safe.
+                             setTimeout(() => this.sliceEntity(neighbor), 50); // Small delay for visual ripple
+                         }
+                    }
+                });
             }
         }
     }
@@ -454,8 +478,11 @@ export class GameEngine {
         }
 
         // 4. Render Systems
+        // Check for Pixel Storm
+        const isPixelated = this.activeEffect?.type === EffectType.PIXEL_STORM;
+
         this.particleSystem.draw(this.renderer); 
-        this.entityManager.draw(this.renderer);
+        this.renderer.drawEntities(this.entityManager.entities, this.activeEffect?.type);
         
         // Draw Trail
         const isRainbow = this.comboCount >= 5;
@@ -478,8 +505,10 @@ export class GameEngine {
             renderWidthMult = 1.5;
         }
 
-        if (this.activeEffect?.type === EffectType.WIDE_BLADE) {
-            renderWidthMult *= 2;
+        if (this.activeEffect?.type === EffectType.CHAIN_REACTION) {
+            // Chain reaction gets an electric trail visual? Or just wider?
+            renderWidthMult *= 1.5;
+            renderIsRainbow = true; // Electric look
         }
 
         this.renderer.drawTrails(this.slicePath, { 

@@ -27,6 +27,16 @@ const GameOverlay: React.FC<GameOverlayProps> = ({
   videoRef,
   activeEffect
 }) => {
+  // Helper to properly format scores, handling negatives cleanly (e.g. -0005)
+  const formatScore = (val: number) => {
+      const isNegative = val < 0;
+      const absVal = Math.abs(val);
+      // Pad to 4 digits for magnitude, so 5 becomes 0005
+      const padded = absVal.toString().padStart(4, '0'); 
+      // If negative, prepend -, else prepend 0. Final length is 5 chars.
+      return isNegative ? `-${padded}` : `0${padded}`;
+  };
+
   return (
     <>
       {/* Damage Flash Overlay */}
@@ -41,10 +51,10 @@ const GameOverlay: React.FC<GameOverlayProps> = ({
          <div className="flex flex-col transform skew-x-[-10deg]">
              <div className="bg-gradient-to-r from-yellow-400 to-orange-500 px-6 py-2 border-b-4 border-yellow-700 shadow-lg">
                  <div className="flex items-center gap-2">
-                     <span className="text-xs font-black text-yellow-900 uppercase tracking-widest">Score</span>
+                     <span className="text-xs font-black text-yellow-900 uppercase tracking-wider">Score</span>
                  </div>
-                 <div key={score} className="text-4xl font-black text-white drop-shadow-[2px_2px_0px_rgba(0,0,0,0.5)] animate-pulse-short">
-                     {score.toString().padStart(5, '0')}
+                 <div key={score} className="text-4xl font-black text-white drop-shadow-[2px_2px_0px_rgba(0,0,0,0.5)] animate-pulse-short font-mono">
+                     {formatScore(score)}
                  </div>
              </div>
              <div className="bg-black/50 backdrop-blur-sm px-4 py-1 flex items-center gap-2 mt-1">

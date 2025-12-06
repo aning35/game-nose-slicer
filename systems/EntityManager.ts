@@ -1,4 +1,5 @@
 
+
 import { GameEntity, Difficulty, EntityType, EffectType, Point } from '../types';
 import { 
   GRAVITY, 
@@ -271,6 +272,7 @@ export class EntityManager {
     }
 
     draw(renderer: Renderer) {
+        // Not used, Engine calls Renderer directly, but we keep the method just in case
         renderer.drawEntities(this.entities);
     }
 }

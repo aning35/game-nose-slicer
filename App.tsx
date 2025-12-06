@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import GameCanvas from './components/GameCanvas';
-import { GameState, Difficulty } from './types';
-import { Play, Trophy, Skull, Globe } from 'lucide-react';
-import { TRANSLATIONS } from './constants';
+import { GameState, Difficulty, EffectType, ActiveEffectState } from './types';
+import { Play, Trophy, Skull, Globe, Info, CornerUpLeft } from 'lucide-react';
+import { TRANSLATIONS, SPECIAL_FRUITS, BOMB_TYPE } from './constants';
 import { 
     playSliceSound, 
     playBombSound, 
@@ -101,6 +101,7 @@ const App: React.FC = () => {
   const [difficulty, setDifficulty] = useState<Difficulty>(Difficulty.MEDIUM);
   const [toast, setToast] = useState<{msg: string, color: string, id: number} | null>(null);
   const [language, setLanguage] = useState<'zh' | 'en'>('zh');
+  const [activeEffectType, setActiveEffectType] = useState<EffectType>(EffectType.NONE);
   
   // Shared Mutable Ref for Cursor Position (avoids React rerenders)
   const cursorPosRef = useRef({ x: 0, y: 0 });
@@ -169,6 +170,13 @@ const App: React.FC = () => {
       setLanguage(prev => prev === 'zh' ? 'en' : 'zh');
   };
 
+  // Logic for Dynamic Cursor CSS
+  const getCursorScaleClass = () => {
+      if (activeEffectType === EffectType.GIANT_CURSOR) return 'scale-[3]';
+      if (activeEffectType === EffectType.TINY_CURSOR) return 'scale-[0.3]';
+      return 'scale-100';
+  };
+
   return (
     <div className="relative w-full h-screen bg-gray-900 overflow-hidden select-none font-sans cursor-none">
       <GameCanvas 
@@ -185,15 +193,16 @@ const App: React.FC = () => {
         onCalibrationComplete={handleCalibrationComplete}
         setScore={setScore}
         onCursorMove={handleCursorMove}
+        onActiveEffectChange={(effect) => setActiveEffectType(effect ? effect.type : EffectType.NONE)}
       />
 
       {/* High Z-Index Visual Cursor */}
       <div 
         ref={visualCursorRef}
-        className="fixed top-0 left-0 w-8 h-8 pointer-events-none z-[100] -ml-4 -mt-4 mix-blend-screen"
+        className={`fixed top-0 left-0 w-8 h-8 pointer-events-none z-[100] -ml-4 -mt-4 mix-blend-screen transition-transform duration-500 ease-out`}
         style={{ willChange: 'transform' }}
       >
-        <div className="relative w-full h-full animate-pulse">
+        <div className={`relative w-full h-full animate-pulse transition-transform duration-500 ${getCursorScaleClass()}`}>
              <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-white rounded-full -translate-x-1/2 -translate-y-1/2 shadow-[0_0_10px_white]" />
              <div className="absolute inset-0 border-2 border-cyan-400/80 rounded-full shadow-[0_0_15px_cyan]" />
         </div>
@@ -208,27 +217,99 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* Instructions Overlay */}
+      {gameState === GameState.INSTRUCTIONS && (
+           <div className="absolute inset-0 z-40 bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 md:p-8">
+               <h2 className="text-3xl md:text-4xl font-black text-cyan-400 mb-2 md:mb-4 tracking-wider shrink-0">{t.howToPlay}</h2>
+               
+               <div className="flex flex-col gap-4 w-full max-w-7xl flex-1 overflow-hidden min-h-0">
+                   {/* Basic Rules - Compact */}
+                   <div className="bg-white/10 p-3 rounded-xl border border-white/10 shrink-0">
+                       <h3 className="text-lg text-white font-bold mb-1 border-b border-white/20 pb-1">🎯 {t.rules.basic}</h3>
+                       <p className="text-gray-300 text-sm md:text-base leading-snug">
+                           {language === 'zh' ? 
+                            '正对摄像头，移动鼻尖控制光标。切开水果得分，不要碰到炸弹！' : 
+                            'Face camera, move nose to control cursor. Slice fruits, avoid bombs!'}
+                       </p>
+                   </div>
+                   
+                   {/* Special Items Grid - Full Screen, No Scroll */}
+                   <div className="bg-white/10 p-3 rounded-xl border border-white/10 flex-1 flex flex-col min-h-0">
+                       <h3 className="text-lg text-white font-bold mb-2 border-b border-white/20 pb-1 shrink-0">✨ {t.rules.items}</h3>
+                       
+                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 h-full content-start">
+                           {/* Render Bomb Manually */}
+                           <div className="flex items-center gap-2 bg-red-900/20 p-2 rounded border border-red-500/30 h-10 md:h-12">
+                               <span className="text-xl md:text-2xl">{BOMB_TYPE.emoji}</span>
+                               <span className="text-red-300 font-bold text-xs md:text-sm truncate leading-tight">{t.items.bomb}</span>
+                           </div>
+
+                           {/* Render all special fruits */}
+                           {Object.values(SPECIAL_FRUITS).map((fruit) => (
+                               <div key={fruit.effect} className="flex items-center gap-2 bg-white/5 p-2 rounded border border-white/10 h-10 md:h-12 overflow-hidden">
+                                   <span className="text-xl md:text-2xl shrink-0">{fruit.emoji}</span>
+                                   <span className="text-white font-medium text-xs md:text-sm truncate leading-tight" title={t.items[fruit.effect as keyof typeof t.items]}>
+                                       {t.items[fruit.effect as keyof typeof t.items] || fruit.effect}
+                                   </span>
+                               </div>
+                           ))}
+                       </div>
+                   </div>
+               </div>
+
+               <div className="mt-4 shrink-0">
+                   <NoseButton 
+                       onClick={() => setGameState(GameState.MENU)}
+                       cursorPos={cursorPosRef}
+                       className="px-8 py-2 md:px-12 md:py-3 bg-gray-700 hover:bg-gray-600 rounded-full text-white text-lg md:text-xl font-bold flex items-center gap-3 border-2 border-white/20"
+                       label={
+                           <>
+                            <CornerUpLeft /> {t.back}
+                           </>
+                       }
+                   />
+               </div>
+           </div>
+      )}
+
       {/* Menu Overlay - Transparent to see Nose Trail */}
       {gameState === GameState.MENU && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
             {/* Slight gradient to make text pop, but keep video visible */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60 pointer-events-none" />
             
-            {/* Language Switcher (Top Right) - Now Controlled by Nose */}
-            <NoseButton 
-                onClick={() => {
-                    toggleLanguage();
-                    playSliceSound();
-                }}
-                cursorPos={cursorPosRef}
-                className="absolute top-6 right-6 z-40 bg-white/10 text-white px-4 py-2 rounded-full font-bold border border-white/20 min-w-[160px] flex items-center justify-center gap-2"
-                label={
-                    <div className="flex items-center gap-2">
-                        <Globe size={18} />
-                        <span>{language === 'zh' ? 'EN / 中文' : 'English / 中文'}</span>
-                    </div>
-                }
-            />
+            {/* Top Bar: Language & Instructions */}
+            <div className="absolute top-6 right-6 z-40 flex flex-col gap-4 items-end">
+                <NoseButton 
+                    onClick={() => {
+                        toggleLanguage();
+                        playSliceSound();
+                    }}
+                    cursorPos={cursorPosRef}
+                    className="bg-white/10 text-white px-4 py-2 rounded-full font-bold border border-white/20 min-w-[160px] flex items-center justify-center gap-2"
+                    label={
+                        <div className="flex items-center gap-2">
+                            <Globe size={18} />
+                            <span>{language === 'zh' ? 'EN / 中文' : 'English / 中文'}</span>
+                        </div>
+                    }
+                />
+                
+                <NoseButton 
+                    onClick={() => {
+                        setGameState(GameState.INSTRUCTIONS);
+                        playSliceSound();
+                    }}
+                    cursorPos={cursorPosRef}
+                    className="bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-200 px-4 py-2 rounded-full font-bold border border-cyan-500/30 min-w-[160px] flex items-center justify-center gap-2"
+                    label={
+                        <div className="flex items-center gap-2">
+                            <Info size={18} />
+                            <span>{t.howToPlay}</span>
+                        </div>
+                    }
+                />
+            </div>
 
             <div className="text-center animate-bounce-in flex flex-col items-center z-30">
                 <h1 className="text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 mb-2 drop-shadow-2xl" style={{filter: 'drop-shadow(0 0 20px rgba(0,255,255,0.5))'}}>
