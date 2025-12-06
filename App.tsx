@@ -102,6 +102,7 @@ const App: React.FC = () => {
   
   // Shared Mutable Ref for Cursor Position (avoids React rerenders)
   const cursorPosRef = useRef({ x: 0, y: 0 });
+  const visualCursorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('sliceMasterHighScore');
@@ -154,10 +155,14 @@ const App: React.FC = () => {
 
   const handleCursorMove = (x: number, y: number) => {
       cursorPosRef.current = { x, y };
+      // Update visual cursor DOM element directly for performance
+      if (visualCursorRef.current) {
+          visualCursorRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      }
   };
 
   return (
-    <div className="relative w-full h-screen bg-gray-900 overflow-hidden select-none font-sans">
+    <div className="relative w-full h-screen bg-gray-900 overflow-hidden select-none font-sans cursor-none">
       <GameCanvas 
         gameState={gameState} 
         score={score}
@@ -172,6 +177,18 @@ const App: React.FC = () => {
         setScore={setScore}
         onCursorMove={handleCursorMove}
       />
+
+      {/* High Z-Index Visual Cursor */}
+      <div 
+        ref={visualCursorRef}
+        className="fixed top-0 left-0 w-8 h-8 pointer-events-none z-[100] -ml-4 -mt-4 mix-blend-screen"
+        style={{ willChange: 'transform' }}
+      >
+        <div className="relative w-full h-full animate-pulse">
+             <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-white rounded-full -translate-x-1/2 -translate-y-1/2 shadow-[0_0_10px_white]" />
+             <div className="absolute inset-0 border-2 border-cyan-400/80 rounded-full shadow-[0_0_15px_cyan]" />
+        </div>
+      </div>
 
       {/* Floating Toast */}
       {toast && (

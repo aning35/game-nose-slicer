@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { Heart, Trophy } from 'lucide-react';
-import { GameState } from '../types';
+import { GameState, ActiveEffectState } from '../types';
+import { SPECIAL_FRUITS } from '../constants';
 
 interface GameOverlayProps {
   gameState: GameState;
@@ -10,7 +12,8 @@ interface GameOverlayProps {
   isHit: boolean;
   isCursorActive: boolean;
   calibrationProgress: number;
-  videoRef: React.RefObject<HTMLVideoElement | null>; // Using the broader RefObject type
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  activeEffect: ActiveEffectState | null;
 }
 
 const GameOverlay: React.FC<GameOverlayProps> = ({
@@ -21,7 +24,8 @@ const GameOverlay: React.FC<GameOverlayProps> = ({
   isHit,
   isCursorActive,
   calibrationProgress,
-  videoRef
+  videoRef,
+  activeEffect
 }) => {
   return (
     <>
@@ -49,16 +53,39 @@ const GameOverlay: React.FC<GameOverlayProps> = ({
              </div>
          </div>
 
+         {/* Center Powerup Bar */}
+         {activeEffect && (
+             <div className="absolute top-20 left-1/2 transform -translate-x-1/2 flex flex-col items-center">
+                 <div className="bg-black/60 backdrop-blur-md rounded-full px-6 py-2 border-2 border-white/30 flex items-center gap-4 shadow-[0_0_20px_currentColor]" style={{color: SPECIAL_FRUITS[activeEffect.type]?.color || 'white'}}>
+                     <span className="text-3xl animate-bounce">{SPECIAL_FRUITS[activeEffect.type]?.emoji}</span>
+                     <div className="flex flex-col">
+                         <span className="text-xs font-bold text-white uppercase tracking-wider">{activeEffect.type.replace('_', ' ')}</span>
+                         <div className="w-32 h-2 bg-gray-700 rounded-full mt-1 overflow-hidden">
+                             <div 
+                                className="h-full bg-white transition-all duration-100 ease-linear"
+                                style={{ width: `${(activeEffect.timer / activeEffect.maxDuration) * 100}%`}}
+                             />
+                         </div>
+                     </div>
+                 </div>
+             </div>
+         )}
+
          {/* Lives Block */}
          <div className="flex gap-2 transform skew-x-[-10deg] bg-black/40 backdrop-blur-md p-2 rounded-lg border-2 border-red-500/30">
-             {[1, 2, 3].map((i) => (
-                 <Heart 
-                    key={i} 
-                    size={32} 
-                    className={`transition-all duration-300 ${i <= lives ? 'fill-red-500 text-red-600 animate-pulse-slow' : 'fill-gray-800 text-gray-700 scale-75'}`} 
-                    strokeWidth={2.5}
-                 />
-             ))}
+             {Array.from({length: Math.max(3, lives)}).map((_, i) => {
+                 // Logic to show hearts (even if > 3)
+                 if (i >= lives) return null; // Don't render placeholders for extra lives beyond max, but we cap visual clutter? 
+                 // Actually, let's just render all lives
+                 return (
+                    <Heart 
+                        key={i} 
+                        size={32} 
+                        className={`transition-all duration-300 fill-red-500 text-red-600 animate-pulse-slow`} 
+                        strokeWidth={2.5}
+                    />
+                 );
+             })}
          </div>
 
       </div>
@@ -79,7 +106,6 @@ const GameOverlay: React.FC<GameOverlayProps> = ({
       {/* Calibration Progress Overlay */}
       {gameState === GameState.CALIBRATION && (
           <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-               {/* Note: The canvas renders the main calibration text, this is just extra UI if needed, but keeping it clean for now */}
           </div>
       )}
     </>

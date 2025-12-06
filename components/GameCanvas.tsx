@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect, useState } from 'react';
-import { GameState, Difficulty } from '../types';
+import { GameState, Difficulty, ActiveEffectState } from '../types';
 import { GameEngine } from '../game/GameEngine';
 import GameOverlay from './GameOverlay';
 
@@ -36,6 +36,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const [isHit, setIsHit] = useState(false);
   const [isCursorActive, setIsCursorActive] = useState(false);
   const [calibrationProgress, setCalibrationProgress] = useState(0);
+  const [activeEffect, setActiveEffect] = useState<ActiveEffectState | null>(null);
 
   // Refs for callbacks to ensure stability
   const onScoreUpdateRef = useRef(onScoreUpdate);
@@ -52,14 +53,11 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   }, [onScoreUpdate, onGameOver, onCalibrationComplete, onCursorMove]);
 
   useEffect(() => {
-    // Only initialize if not already initialized
-    // Removing the dependency array allows this to retry if refs are null on first render
     if (canvasRef.current && videoRef.current && !engineRef.current) {
         engineRef.current = new GameEngine(
             canvasRef.current,
             videoRef.current,
             {
-                // Call via refs to avoid closure staleness without triggering re-init
                 onScoreUpdate: (points) => onScoreUpdateRef.current(points),
                 onLivesUpdate: (l) => setLives(l),
                 onDamage: () => {
@@ -72,22 +70,16 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
                 },
                 onCursorActive: (active) => setIsCursorActive(active),
                 onCalibrationProgress: (p) => setCalibrationProgress(p),
-                onCursorMove: (x, y) => onCursorMoveRef.current(x, y)
+                onCursorMove: (x, y) => onCursorMoveRef.current(x, y),
+                onEffectChange: (effect) => setActiveEffect(effect)
             }
         );
         
-        // Force state sync immediately after creation
         engineRef.current.setGameState(gameState);
         engineRef.current.setDifficulty(difficulty);
     }
-
-    return () => {
-        // We do NOT destroy the engine on re-renders, only on unmount
-        // This is handled because we check !engineRef.current before creating
-    };
   }); 
 
-  // Cleanup on unmount only
   useEffect(() => {
     return () => {
         if (engineRef.current) {
@@ -97,14 +89,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
     }
   }, []);
 
-  // Sync GameState
   useEffect(() => {
       if (engineRef.current) {
           engineRef.current.setGameState(gameState);
       }
   }, [gameState]);
   
-  // Sync Difficulty
   useEffect(() => {
       if (engineRef.current) {
           engineRef.current.setDifficulty(difficulty);
@@ -124,6 +114,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           isCursorActive={isCursorActive}
           calibrationProgress={calibrationProgress}
           videoRef={videoRef}
+          activeEffect={activeEffect}
       />
     </>
   );

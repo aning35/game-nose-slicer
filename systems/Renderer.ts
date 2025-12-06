@@ -63,6 +63,17 @@ export class Renderer {
             this.ctx.shadowColor = 'rgba(0,0,0,0.5)';
             this.ctx.shadowBlur = 20;
             
+            // Special Halo
+            if (entity.type === 'special') {
+                this.ctx.shadowColor = entity.color;
+                this.ctx.shadowBlur = 30;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, entity.radius, 0, Math.PI * 2);
+                this.ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 + Math.sin(Date.now() * 0.01) * 0.5})`;
+                this.ctx.lineWidth = 5;
+                this.ctx.stroke();
+            }
+
             this.ctx.font = `${entity.radius * 2}px "Segoe UI Emoji", sans-serif`;
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
