@@ -77,3 +77,13 @@ export enum GameState {
   PLAYING = 'PLAYING',
   GAME_OVER = 'GAME_OVER'
 }
+
+export interface GameCallbacks {
+  onScoreUpdate: (points: number) => void;
+  onLivesUpdate: (lives: number) => void;
+  onDamage: () => void;
+  onGameOver: () => void;
+  onCalibrationComplete: () => void;
+  onCursorActive: (active: boolean) => void;
+  onCalibrationProgress: (progress: number) => void;
+}

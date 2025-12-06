@@ -109,30 +109,50 @@ export class Renderer {
         });
     }
 
-    drawTrails(points: SlicePoint[], isRainbow: boolean) {
+    drawTrails(points: SlicePoint[], options: { 
+        isRainbow: boolean, 
+        color?: string, 
+        widthMultiplier?: number, 
+        isFlickering?: boolean 
+    }) {
         if (points.length < 2) return;
 
         this.rainbowHue = (this.rainbowHue + 5) % 360;
-        const color = isRainbow ? `hsl(${this.rainbowHue}, 100%, 60%)` : '#00ffff';
+        
+        // Determine Color
+        let color = options.color;
+        if (!color) {
+             color = options.isRainbow ? `hsl(${this.rainbowHue}, 100%, 60%)` : '#00ffff';
+        }
+
+        // Determine Width
+        const widthMult = options.widthMultiplier || 1;
+        const baseWidth = BLADE_WIDTH * widthMult;
+        
         const coreColor = '#ffffff';
 
         this.ctx.save();
         this.ctx.lineJoin = 'round';
         this.ctx.lineCap = 'round';
         
+        // Flicker effect (Bomb hit)
+        const alpha = options.isFlickering ? 0.3 + Math.random() * 0.4 : 0.5;
+        
         // Pass 1: Outer Glow
         this.ctx.shadowColor = color;
-        this.ctx.shadowBlur = 25;
+        this.ctx.shadowBlur = options.isFlickering ? 40 : 25 * widthMult;
         this.ctx.fillStyle = color;
-        this.ctx.globalAlpha = 0.5;
-        this.drawRibbonPath(points, BLADE_WIDTH + 15);
+        this.ctx.globalAlpha = alpha;
+        
+        // Draw wider for glow
+        this.drawRibbonPath(points, baseWidth + 15 * widthMult);
         this.ctx.fill();
 
         // Pass 2: Inner Core
         this.ctx.shadowBlur = 15;
         this.ctx.fillStyle = coreColor;
-        this.ctx.globalAlpha = 0.9;
-        this.drawRibbonPath(points, BLADE_WIDTH);
+        this.ctx.globalAlpha = options.isFlickering ? 0.7 : 0.9;
+        this.drawRibbonPath(points, baseWidth);
         this.ctx.fill();
         
         this.ctx.restore();
@@ -141,10 +161,13 @@ export class Renderer {
         const head = points[points.length - 1];
         this.ctx.save();
         this.ctx.shadowColor = color;
-        this.ctx.shadowBlur = 30;
-        this.ctx.fillStyle = isRainbow ? '#fff' : color;
+        this.ctx.shadowBlur = 30 * widthMult;
+        this.ctx.fillStyle = (options.isRainbow || options.color) ? '#fff' : color;
+        
+        const headSize = options.isFlickering ? (baseWidth + 5) * (0.8 + Math.random() * 0.4) : baseWidth + 5;
+
         this.ctx.beginPath();
-        this.ctx.arc(head.x, head.y, BLADE_WIDTH + 5, 0, Math.PI * 2);
+        this.ctx.arc(head.x, head.y, headSize, 0, Math.PI * 2);
         this.ctx.fill();
         this.ctx.restore();
     }
