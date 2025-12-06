@@ -1,6 +1,6 @@
 
 import { GameEntity, Particle, SlicePoint, Point, Splat, FloatingText, GameState } from '../types';
-import { BLADE_WIDTH } from '../constants';
+import { BLADE_WIDTH, TRANSLATIONS } from '../constants';
 import { normalizeVector, perpendicularVector } from '../utils/math';
 
 export class Renderer {
@@ -26,6 +26,25 @@ export class Renderer {
 
     setShake(offsetX: number, offsetY: number) {
         this.ctx.setTransform(1, 0, 0, 1, offsetX, offsetY);
+    }
+
+    drawDiscoBackground() {
+        const hue = (Date.now() / 5) % 360;
+        this.ctx.save();
+        this.ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.1)`;
+        this.ctx.fillRect(0, 0, this.width, this.height);
+        
+        // Strobe lights
+        this.ctx.globalCompositeOperation = 'overlay';
+        const cols = 5;
+        const time = Date.now() / 200;
+        for(let i=0; i<cols; i++) {
+            const x = (i / cols) * this.width;
+            const alpha = (Math.sin(time + i) + 1) / 2 * 0.2;
+            this.ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            this.ctx.fillRect(x, 0, this.width/cols, this.height);
+        }
+        this.ctx.restore();
     }
 
     resetTransform() {
@@ -214,18 +233,20 @@ export class Renderer {
         }
     }
 
-    drawCalibration(progress: number, width: number, height: number) {
+    drawCalibration(progress: number, width: number, height: number, lang: 'zh' | 'en') {
+        const text = TRANSLATIONS[lang];
+
         this.ctx.save();
         this.ctx.fillStyle = '#fff';
         this.ctx.font = 'bold 30px sans-serif';
         this.ctx.textAlign = 'center';
         this.ctx.shadowColor = 'cyan';
         this.ctx.shadowBlur = 10;
-        this.ctx.fillText("头部控制校准", width / 2, height * 0.3);
+        this.ctx.fillText(text.calibrationTitle, width / 2, height * 0.3);
         
         this.ctx.font = '20px sans-serif';
         this.ctx.fillStyle = '#ccc';
-        this.ctx.fillText("请正对摄像头，用鼻尖移动光标", width / 2, height * 0.3 + 40);
+        this.ctx.fillText(text.calibrationDesc, width / 2, height * 0.3 + 40);
         
         const barW = 300;
         const barH = 20;

@@ -62,6 +62,9 @@ export const SPECIAL_FRUITS: Record<string, { emoji: string, color: string, effe
     [EffectType.FRENZY]:        { emoji: '⚡', color: '#FFD700', effect: EffectType.FRENZY, weight: 8, duration: 600 },
     [EffectType.BONUS_POINTS]:  { emoji: '🪙', color: '#DAA520', effect: EffectType.BONUS_POINTS, weight: 8, duration: 0 }, // Instant
     [EffectType.WIDE_BLADE]:    { emoji: '⚔️', color: '#F0F8FF', effect: EffectType.WIDE_BLADE, weight: 10, duration: 600 },
+    [EffectType.ANTI_GRAVITY]:  { emoji: '🎈', color: '#FF00FF', effect: EffectType.ANTI_GRAVITY, weight: 10, duration: 600 },
+    [EffectType.DISCO_FEVER]:   { emoji: '💃', color: '#9400D3', effect: EffectType.DISCO_FEVER, weight: 8, duration: 600 },
+    [EffectType.GOLDEN_SNITCH]: { emoji: '🐝', color: '#FFD700', effect: EffectType.GOLDEN_SNITCH, weight: 5, duration: 0 }, // Instant capture
 };
 
 export const BOMB_TYPE = { emoji: '💣', color: '#333333' };
@@ -74,4 +77,39 @@ export const MAX_LIVES = 6;
 export const MAX_PARTICLES = 40; 
 export const MAX_SPLATS = 20;
 
-export const COMBO_TIMER_MAX = 60; 
+export const COMBO_TIMER_MAX = 60;
+
+export const TRANSLATIONS = {
+  zh: {
+    title: "鼻尖切切乐",
+    instruction: "使用鼻子移动光标",
+    difficulty: {
+      [Difficulty.EASY]: "简单",
+      [Difficulty.MEDIUM]: "普通",
+      [Difficulty.HARD]: "困难"
+    },
+    start: "开始游戏",
+    gameOver: "游戏结束",
+    score: "得分",
+    mainMenu: "主菜单",
+    go: "开始!",
+    calibrationTitle: "头部控制校准",
+    calibrationDesc: "请正对摄像头，用鼻尖移动光标"
+  },
+  en: {
+    title: "Nose Slicer",
+    instruction: "Use your nose to hover",
+    difficulty: {
+      [Difficulty.EASY]: "EASY",
+      [Difficulty.MEDIUM]: "MEDIUM",
+      [Difficulty.HARD]: "HARD"
+    },
+    start: "START GAME",
+    gameOver: "GAME OVER",
+    score: "Score",
+    mainMenu: "MAIN MENU",
+    go: "GO!",
+    calibrationTitle: "Head Calibration",
+    calibrationDesc: "Face camera, move cursor with nose"
+  }
+};

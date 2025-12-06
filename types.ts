@@ -23,7 +23,10 @@ export enum EffectType {
   FREEZE = 'FREEZE',               // 12. 10s Stop physics
   FRENZY = 'FRENZY',               // 13. 10s Fast spawns
   BONUS_POINTS = 'BONUS_POINTS',   // 14. Instant points
-  WIDE_BLADE = 'WIDE_BLADE'        // 15. 10s Wider trail
+  WIDE_BLADE = 'WIDE_BLADE',       // 15. 10s Wider trail
+  ANTI_GRAVITY = 'ANTI_GRAVITY',   // 16. 10s Reverse gravity
+  DISCO_FEVER = 'DISCO_FEVER',     // 17. 10s Flashing BG + 3x Score
+  GOLDEN_SNITCH = 'GOLDEN_SNITCH'  // 18. Hard to catch, 100pts
 }
 
 export interface ActiveEffectState {

@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import GameCanvas from './components/GameCanvas';
 import { GameState, Difficulty } from './types';
-import { Play, Trophy, Skull } from 'lucide-react';
+import { Play, Trophy, Skull, Globe } from 'lucide-react';
+import { TRANSLATIONS } from './constants';
 import { 
     playSliceSound, 
     playBombSound, 
@@ -99,10 +100,13 @@ const App: React.FC = () => {
   const [highScore, setHighScore] = useState(0);
   const [difficulty, setDifficulty] = useState<Difficulty>(Difficulty.MEDIUM);
   const [toast, setToast] = useState<{msg: string, color: string, id: number} | null>(null);
+  const [language, setLanguage] = useState<'zh' | 'en'>('zh');
   
   // Shared Mutable Ref for Cursor Position (avoids React rerenders)
   const cursorPosRef = useRef({ x: 0, y: 0 });
   const visualCursorRef = useRef<HTMLDivElement>(null);
+
+  const t = TRANSLATIONS[language];
 
   useEffect(() => {
     const saved = localStorage.getItem('sliceMasterHighScore');
@@ -150,7 +154,7 @@ const App: React.FC = () => {
   const handleCalibrationComplete = () => {
     setGameState(GameState.PLAYING);
     playStartSound();
-    showToast("GO!", "text-green-400");
+    showToast(t.go, "text-green-400");
   };
 
   const handleCursorMove = (x: number, y: number) => {
@@ -161,6 +165,10 @@ const App: React.FC = () => {
       }
   };
 
+  const toggleLanguage = () => {
+      setLanguage(prev => prev === 'zh' ? 'en' : 'zh');
+  };
+
   return (
     <div className="relative w-full h-screen bg-gray-900 overflow-hidden select-none font-sans cursor-none">
       <GameCanvas 
@@ -168,6 +176,7 @@ const App: React.FC = () => {
         score={score}
         highScore={highScore}
         difficulty={difficulty}
+        language={language}
         onScoreUpdate={handleScoreUpdate} 
         onGameOver={() => {
           playGameOverSound();
@@ -204,14 +213,30 @@ const App: React.FC = () => {
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
             {/* Slight gradient to make text pop, but keep video visible */}
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60 pointer-events-none" />
+            
+            {/* Language Switcher (Top Right) - Now Controlled by Nose */}
+            <NoseButton 
+                onClick={() => {
+                    toggleLanguage();
+                    playSliceSound();
+                }}
+                cursorPos={cursorPosRef}
+                className="absolute top-6 right-6 z-40 bg-white/10 text-white px-4 py-2 rounded-full font-bold border border-white/20 min-w-[160px] flex items-center justify-center gap-2"
+                label={
+                    <div className="flex items-center gap-2">
+                        <Globe size={18} />
+                        <span>{language === 'zh' ? 'EN / 中文' : 'English / 中文'}</span>
+                    </div>
+                }
+            />
 
             <div className="text-center animate-bounce-in flex flex-col items-center z-30">
                 <h1 className="text-7xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 mb-2 drop-shadow-2xl" style={{filter: 'drop-shadow(0 0 20px rgba(0,255,255,0.5))'}}>
-                  Nose Slicer
+                  {t.title}
                 </h1>
                 <div className="flex items-center gap-2 mb-8 bg-black/40 px-4 py-2 rounded-full border border-white/20 backdrop-blur-sm">
                      <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-                     <p className="text-white text-sm uppercase tracking-widest font-bold">Use your nose to hover</p>
+                     <p className="text-white text-sm uppercase tracking-widest font-bold">{t.instruction}</p>
                 </div>
                 
                 <div className="flex gap-6 mb-12">
@@ -225,7 +250,7 @@ const App: React.FC = () => {
                             cursorPos={cursorPosRef}
                             isActive={difficulty === d}
                             className="px-8 py-4 rounded-2xl font-black text-xl border-2 border-white/20 min-w-[140px]"
-                            label={d}
+                            label={t.difficulty[d]}
                         />
                     ))}
                 </div>
@@ -237,7 +262,7 @@ const App: React.FC = () => {
                     label={
                         <div className="flex items-center gap-4 text-3xl font-black">
                              <Play fill="currentColor" size={32} /> 
-                             <span>START GAME</span>
+                             <span>{t.start}</span>
                         </div>
                     }
                 />
@@ -247,14 +272,14 @@ const App: React.FC = () => {
       
       {gameState === GameState.GAME_OVER && (
         <div className="absolute inset-0 bg-red-900/80 backdrop-blur-md flex flex-col items-center justify-center z-50">
-           <h2 className="text-8xl font-black text-white mb-2 tracking-tighter drop-shadow-xl">GAME OVER</h2>
-           <p className="text-white/80 text-3xl mb-12 font-light">Score: <span className="text-yellow-400 font-bold">{score}</span></p>
+           <h2 className="text-8xl font-black text-white mb-2 tracking-tighter drop-shadow-xl">{t.gameOver}</h2>
+           <p className="text-white/80 text-3xl mb-12 font-light">{t.score}: <span className="text-yellow-400 font-bold">{score}</span></p>
            
            <NoseButton 
               onClick={() => setGameState(GameState.MENU)}
               cursorPos={cursorPosRef}
               className="px-16 py-6 bg-white text-black text-2xl font-bold rounded-full shadow-xl"
-              label="MAIN MENU"
+              label={t.mainMenu}
            />
         </div>
       )}

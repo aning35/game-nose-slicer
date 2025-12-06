@@ -34,6 +34,7 @@ export class GameEngine {
     private height: number;
     private gameState: GameState = GameState.MENU;
     private difficulty: Difficulty = Difficulty.MEDIUM;
+    private language: 'zh' | 'en' = 'zh';
 
     private slicePath: SlicePoint[] = [];
 
@@ -126,6 +127,10 @@ export class GameEngine {
 
     public setDifficulty(d: Difficulty) {
         this.difficulty = d;
+    }
+
+    public setLanguage(lang: 'zh' | 'en') {
+        this.language = lang;
     }
 
     public setGameState(state: GameState) {
@@ -262,6 +267,7 @@ export class GameEngine {
         let points = entity.scoreValue;
         if (this.comboCount > 3) points *= 2;
         if (this.activeEffect?.type === EffectType.HIGH_STAKES) points *= 2; // Double Score
+        if (this.activeEffect?.type === EffectType.DISCO_FEVER) points *= 3; // Triple Score
 
         this.callbacks.onScoreUpdate(points);
         
@@ -329,6 +335,11 @@ export class GameEngine {
             this.particleSystem.createFloatingText(this.width/2, this.height/2, "+50 PTS", '#FFD700');
             return;
         }
+        if (type === EffectType.GOLDEN_SNITCH) {
+             // Instant logic handled in slicing score, just adding effect text
+             this.particleSystem.createFloatingText(this.width/2, this.height/2, "CAUGHT IT!", '#FFD700');
+             return;
+        }
 
         // Duration Effects
         this.activeEffect = {
@@ -356,6 +367,12 @@ export class GameEngine {
         // 2. Setup Render
         this.renderer.resetTransform();
         this.renderer.clear();
+
+        // New: Draw Disco Background if active
+        if (this.activeEffect?.type === EffectType.DISCO_FEVER) {
+            this.renderer.drawDiscoBackground();
+        }
+
         if (shakeX !== 0 || shakeY !== 0) {
             this.renderer.setShake(shakeX, shakeY);
         }
@@ -486,7 +503,7 @@ export class GameEngine {
         }
 
         if (this.gameState === GameState.CALIBRATION) {
-            this.renderer.drawCalibration(this.calibrationProgress, this.width, this.height);
+            this.renderer.drawCalibration(this.calibrationProgress, this.width, this.height, this.language);
         }
     }
 }

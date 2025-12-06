@@ -9,6 +9,7 @@ interface GameCanvasProps {
   score: number;
   highScore: number;
   difficulty: Difficulty;
+  language: 'zh' | 'en';
   onScoreUpdate: (scoreChange: number) => void;
   onGameOver: () => void;
   onCalibrationComplete?: () => void;
@@ -21,6 +22,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   score,
   highScore,
   difficulty,
+  language,
   onScoreUpdate, 
   onGameOver, 
   onCalibrationComplete,
@@ -77,6 +79,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
         
         engineRef.current.setGameState(gameState);
         engineRef.current.setDifficulty(difficulty);
+        engineRef.current.setLanguage(language);
     }
   }); 
 
@@ -100,6 +103,12 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           engineRef.current.setDifficulty(difficulty);
       }
   }, [difficulty]);
+  
+  useEffect(() => {
+      if (engineRef.current) {
+          engineRef.current.setLanguage(language);
+      }
+  }, [language]);
 
   return (
     <>
