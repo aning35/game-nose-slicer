@@ -131,6 +131,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           calibrationProgress={calibrationProgress}
           videoRef={videoRef}
           activeEffect={activeEffect}
+          language={language}
       />
     </>
   );

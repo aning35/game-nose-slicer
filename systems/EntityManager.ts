@@ -36,8 +36,8 @@ export class EntityManager {
     update(activeEffect: EffectType, cursor: Point) {
         // Update physics
         this.entities.forEach(entity => {
-            if (activeEffect === EffectType.FREEZE) {
-                // Do nothing, suspended animation
+            // Freeze Logic: Only freeze bombs, let fruits move
+            if (activeEffect === EffectType.FREEZE && entity.type === 'bomb') {
                 return;
             }
 

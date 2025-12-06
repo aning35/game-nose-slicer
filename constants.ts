@@ -126,6 +126,16 @@ export const TRANSLATIONS = {
       [EffectType.GOLDEN_SNITCH]: "金飞贼 (+100分)",
       [EffectType.GHOST_MODE]: "幽灵模式 (隐形)",
       [EffectType.PIXEL_STORM]: "像素风暴 (8-bit)",
+    },
+    gameplay: {
+        combo: "连击!",
+        powerUp: "能力提升!",
+        blocked: "格挡!",
+        trap: "陷阱!",
+        extraLife: "+1 生命",
+        bonusPoints: "+50 分",
+        caughtIt: "抓到了!",
+        blast: "全屏清除!"
     }
   },
   en: {
@@ -171,6 +181,16 @@ export const TRANSLATIONS = {
       [EffectType.GOLDEN_SNITCH]: "Golden Snitch (+100)",
       [EffectType.GHOST_MODE]: "Ghost Mode (Invisible)",
       [EffectType.PIXEL_STORM]: "Pixel Storm (8-bit)",
+    },
+    gameplay: {
+        combo: "COMBO!",
+        powerUp: "POWER UP!",
+        blocked: "BLOCKED!",
+        trap: "TRAP!",
+        extraLife: "+1 LIFE",
+        bonusPoints: "+50 PTS",
+        caughtIt: "CAUGHT IT!",
+        blast: "SCREEN CLEAR!"
     }
   }
 };

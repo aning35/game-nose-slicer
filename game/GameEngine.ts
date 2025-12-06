@@ -1,5 +1,4 @@
 
-
 import { GameEntity, SlicePoint, GameState, Point, CameraShake, GameCallbacks, Difficulty, EffectType, ActiveEffectState } from '../types';
 import { 
   BLADE_LIFE, 
@@ -7,7 +6,8 @@ import {
   HITBOX_RADIUS,
   DIFFICULTY_SETTINGS,
   SPECIAL_FRUITS,
-  MAX_LIVES
+  MAX_LIVES,
+  TRANSLATIONS
 } from '../constants';
 import { pointToSegmentDistance } from '../utils/math';
 import { InputHandler } from '../systems/InputHandler';
@@ -243,9 +243,10 @@ export class GameEngine {
             this.comboTimer = COMBO_TIMER_MAX;
             this.comboCount++;
             if (this.comboCount > 1) {
+                const t = TRANSLATIONS[this.language].gameplay;
                 this.particleSystem.createFloatingText(
                     p2.x, p2.y,
-                    `${this.comboCount} COMBO!`,
+                    `${this.comboCount} ${t.combo}`,
                     '#ffd700'
                 );
             }
@@ -261,8 +262,15 @@ export class GameEngine {
         
         // Handle Special Effect Activation
         if (entity.type === 'special' && entity.effectType) {
+            const t = TRANSLATIONS[this.language];
             this.activateEffect(entity.effectType);
-            this.particleSystem.createFloatingText(entity.x, entity.y, "POWER UP!", '#ffffff');
+            
+            // Get short name for floating text
+            const fullItemName = t.items[entity.effectType] || '';
+            const shortName = fullItemName.split(' (')[0] || t.gameplay.powerUp;
+
+            this.particleSystem.createFloatingText(entity.x, entity.y, shortName, '#ffffff');
+            
             this.trailEffect = { type: 'special', timer: 20, color: entity.color };
             this.callbacks.onScoreUpdate(entity.scoreValue);
             return;
@@ -277,9 +285,10 @@ export class GameEngine {
         this.callbacks.onScoreUpdate(points);
         
         if (entity.type === 'bomb') {
+            const t = TRANSLATIONS[this.language].gameplay;
             if (this.activeEffect?.type === EffectType.INVINCIBILITY) {
                 // Shielded!
-                this.particleSystem.createFloatingText(entity.x, entity.y, "BLOCKED!", '#ffff00');
+                this.particleSystem.createFloatingText(entity.x, entity.y, t.blocked, '#ffff00');
                 return;
             }
 
@@ -329,17 +338,18 @@ export class GameEngine {
     private activateEffect(type: EffectType) {
         const config = SPECIAL_FRUITS[type];
         if (!config) return;
+        const t = TRANSLATIONS[this.language].gameplay;
 
         // Instant Effects
         if (type === EffectType.EXTRA_LIFE) {
             this.lives = Math.min(MAX_LIVES, this.lives + 1);
             this.callbacks.onLivesUpdate(this.lives);
-            this.particleSystem.createFloatingText(this.width/2, this.height/2, "+1 LIFE", '#ff0088');
+            this.particleSystem.createFloatingText(this.width/2, this.height/2, t.extraLife, '#ff0088');
             return;
         }
         if (type === EffectType.BOMB_TRAP) {
             this.entityManager.spawnBombSwarm();
-             this.particleSystem.createFloatingText(this.width/2, this.height/2, "TRAP!", '#000000');
+             this.particleSystem.createFloatingText(this.width/2, this.height/2, t.trap, '#000000');
             return;
         }
         if (type === EffectType.BLAST) {
@@ -352,16 +362,17 @@ export class GameEngine {
                 }
             });
             this.callbacks.onScoreUpdate(clearedCount * 5);
+             this.particleSystem.createFloatingText(this.width/2, this.height/2, t.blast, '#FF6347');
             return;
         }
         if (type === EffectType.BONUS_POINTS) {
             this.callbacks.onScoreUpdate(50);
-            this.particleSystem.createFloatingText(this.width/2, this.height/2, "+50 PTS", '#FFD700');
+            this.particleSystem.createFloatingText(this.width/2, this.height/2, t.bonusPoints, '#FFD700');
             return;
         }
         if (type === EffectType.GOLDEN_SNITCH) {
              // Instant logic handled in slicing score, just adding effect text
-             this.particleSystem.createFloatingText(this.width/2, this.height/2, "CAUGHT IT!", '#FFD700');
+             this.particleSystem.createFloatingText(this.width/2, this.height/2, t.caughtIt, '#FFD700');
              return;
         }
 

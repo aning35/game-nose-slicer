@@ -2,7 +2,7 @@
 import React from 'react';
 import { Heart, Trophy } from 'lucide-react';
 import { GameState, ActiveEffectState } from '../types';
-import { SPECIAL_FRUITS } from '../constants';
+import { SPECIAL_FRUITS, TRANSLATIONS } from '../constants';
 
 interface GameOverlayProps {
   gameState: GameState;
@@ -14,6 +14,7 @@ interface GameOverlayProps {
   calibrationProgress: number;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   activeEffect: ActiveEffectState | null;
+  language: 'zh' | 'en';
 }
 
 const GameOverlay: React.FC<GameOverlayProps> = ({
@@ -25,7 +26,8 @@ const GameOverlay: React.FC<GameOverlayProps> = ({
   isCursorActive,
   calibrationProgress,
   videoRef,
-  activeEffect
+  activeEffect,
+  language
 }) => {
   // Helper to properly format scores, handling negatives cleanly (e.g. -0005)
   const formatScore = (val: number) => {
@@ -35,6 +37,13 @@ const GameOverlay: React.FC<GameOverlayProps> = ({
       const padded = absVal.toString().padStart(4, '0'); 
       // If negative, prepend -, else prepend 0. Final length is 5 chars.
       return isNegative ? `-${padded}` : `0${padded}`;
+  };
+
+  const getEffectName = () => {
+    if (!activeEffect) return '';
+    const text = TRANSLATIONS[language].items[activeEffect.type];
+    // Extract name before parenthesis if exists (e.g. "Invincibility (10s)" -> "Invincibility")
+    return text ? text.split(' (')[0] : activeEffect.type;
   };
 
   return (
@@ -69,7 +78,9 @@ const GameOverlay: React.FC<GameOverlayProps> = ({
                  <div className="bg-black/60 backdrop-blur-md rounded-full px-6 py-2 border-2 border-white/30 flex items-center gap-4 shadow-[0_0_20px_currentColor]" style={{color: SPECIAL_FRUITS[activeEffect.type]?.color || 'white'}}>
                      <span className="text-3xl animate-bounce">{SPECIAL_FRUITS[activeEffect.type]?.emoji}</span>
                      <div className="flex flex-col">
-                         <span className="text-xs font-bold text-white uppercase tracking-wider">{activeEffect.type.replace('_', ' ')}</span>
+                         <span className="text-xs font-bold text-white uppercase tracking-wider">
+                             {getEffectName()}
+                         </span>
                          <div className="w-32 h-2 bg-gray-700 rounded-full mt-1 overflow-hidden">
                              <div 
                                 className="h-full bg-white transition-all duration-100 ease-linear"
