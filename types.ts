@@ -1,6 +1,12 @@
 
 export type EntityType = 'fruit' | 'bomb';
 
+export enum Difficulty {
+  EASY = 'EASY',
+  MEDIUM = 'MEDIUM',
+  HARD = 'HARD'
+}
+
 export interface Point {
   x: number;
   y: number;
@@ -86,4 +92,5 @@ export interface GameCallbacks {
   onCalibrationComplete: () => void;
   onCursorActive: (active: boolean) => void;
   onCalibrationProgress: (progress: number) => void;
+  onCursorMove: (x: number, y: number) => void;
 }

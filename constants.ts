@@ -1,9 +1,35 @@
 
+import { Difficulty } from './types';
+
 export const GRAVITY = 0.08; // Increased gravity for faster, snappier gameplay
 export const FRICTION = 0.995;
 export const BLADE_LIFE = 20; // Long trail
 export const BLADE_WIDTH = 12; // Thick robust blade
-export const SPAWN_RATE_INITIAL = 35; // Much faster spawn rate (was 100)
+export const SPAWN_RATE_INITIAL = 35; // Fallback default
+
+export const DIFFICULTY_SETTINGS = {
+  [Difficulty.EASY]: {
+    spawnRate: 55,
+    bombChance: 0.05,
+    speedMult: 0.85,
+    burstChance: 0.1,
+    maxMult: 1.5
+  },
+  [Difficulty.MEDIUM]: {
+    spawnRate: 35,
+    bombChance: 0.20,
+    speedMult: 1.0,
+    burstChance: 0.3,
+    maxMult: 3.0
+  },
+  [Difficulty.HARD]: {
+    spawnRate: 25,
+    bombChance: 0.35,
+    speedMult: 1.25,
+    burstChance: 0.5,
+    maxMult: 5.0
+  }
+};
 
 // Hitbox size for nose (larger than finger)
 export const HITBOX_RADIUS = 80;

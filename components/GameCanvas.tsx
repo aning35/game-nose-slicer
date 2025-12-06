@@ -1,5 +1,6 @@
+
 import React, { useRef, useEffect, useState } from 'react';
-import { GameState } from '../types';
+import { GameState, Difficulty } from '../types';
 import { GameEngine } from '../game/GameEngine';
 import GameOverlay from './GameOverlay';
 
@@ -7,20 +8,24 @@ interface GameCanvasProps {
   gameState: GameState;
   score: number;
   highScore: number;
+  difficulty: Difficulty;
   onScoreUpdate: (scoreChange: number) => void;
   onGameOver: () => void;
   onCalibrationComplete?: () => void;
   setScore: React.Dispatch<React.SetStateAction<number>>;
+  onCursorMove: (x: number, y: number) => void;
 }
 
 const GameCanvas: React.FC<GameCanvasProps> = ({ 
   gameState, 
   score,
   highScore,
+  difficulty,
   onScoreUpdate, 
   onGameOver, 
   onCalibrationComplete,
-  setScore 
+  setScore,
+  onCursorMove
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -36,13 +41,15 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
   const onScoreUpdateRef = useRef(onScoreUpdate);
   const onGameOverRef = useRef(onGameOver);
   const onCalibrationCompleteRef = useRef(onCalibrationComplete);
+  const onCursorMoveRef = useRef(onCursorMove);
 
   // Update refs when props change
   useEffect(() => {
     onScoreUpdateRef.current = onScoreUpdate;
     onGameOverRef.current = onGameOver;
     onCalibrationCompleteRef.current = onCalibrationComplete;
-  }, [onScoreUpdate, onGameOver, onCalibrationComplete]);
+    onCursorMoveRef.current = onCursorMove;
+  }, [onScoreUpdate, onGameOver, onCalibrationComplete, onCursorMove]);
 
   useEffect(() => {
     // Only initialize if not already initialized
@@ -64,12 +71,14 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
                     if (onCalibrationCompleteRef.current) onCalibrationCompleteRef.current();
                 },
                 onCursorActive: (active) => setIsCursorActive(active),
-                onCalibrationProgress: (p) => setCalibrationProgress(p)
+                onCalibrationProgress: (p) => setCalibrationProgress(p),
+                onCursorMove: (x, y) => onCursorMoveRef.current(x, y)
             }
         );
         
         // Force state sync immediately after creation
         engineRef.current.setGameState(gameState);
+        engineRef.current.setDifficulty(difficulty);
     }
 
     return () => {
@@ -94,6 +103,13 @@ const GameCanvas: React.FC<GameCanvasProps> = ({
           engineRef.current.setGameState(gameState);
       }
   }, [gameState]);
+  
+  // Sync Difficulty
+  useEffect(() => {
+      if (engineRef.current) {
+          engineRef.current.setDifficulty(difficulty);
+      }
+  }, [difficulty]);
 
   return (
     <>
