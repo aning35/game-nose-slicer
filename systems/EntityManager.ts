@@ -117,14 +117,15 @@ export class EntityManager {
         });
     }
 
-    spawn(difficulty: Difficulty, difficultyMultiplier: number, activeEffect: EffectType) {
+    spawn(difficulty: Difficulty, difficultyMultiplier: number, activeEffect: EffectType, allowSpecial: boolean) {
         const config = DIFFICULTY_SETTINGS[difficulty];
 
         let isBomb = false;
         let isSpecial = false;
         
         // 1. Determine Type based on Active Effect overrides
-        if (activeEffect === EffectType.FRUIT_RAIN || activeEffect === EffectType.DISCO_FEVER) {
+        // Added EffectType.FREEZE here to prevent random bombs spawning during freeze time
+        if (activeEffect === EffectType.FRUIT_RAIN || activeEffect === EffectType.DISCO_FEVER || activeEffect === EffectType.FREEZE) {
             isBomb = false; // No bombs allowed
         } else if (activeEffect === EffectType.FRENZY) {
              isBomb = Math.random() < 0.1; // Reduced bomb chance in frenzy
@@ -135,12 +136,13 @@ export class EntityManager {
 
         // 2. Special Fruit Logic (Only if no effect active, and not a bomb turn)
         // Probability: 5% base
-        if (activeEffect === EffectType.NONE && !isBomb && Math.random() < 0.08) {
+        if (allowSpecial && activeEffect === EffectType.NONE && !isBomb && Math.random() < 0.08) {
             isSpecial = true;
         }
 
         // Golden Snitch has a separate tiny chance to just appear during chaos
-        if (!isBomb && !isSpecial && Math.random() < 0.01) {
+        // Also check allowSpecial here
+        if (allowSpecial && !isBomb && !isSpecial && Math.random() < 0.01) {
             isSpecial = true;
             // We force it later
         }

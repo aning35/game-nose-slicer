@@ -1,4 +1,5 @@
 
+
 import { GameEntity, SlicePoint, GameState, Point, CameraShake, GameCallbacks, Difficulty, EffectType, ActiveEffectState } from '../types';
 import { 
   BLADE_LIFE, 
@@ -49,6 +50,7 @@ export class GameEngine {
 
     // Active Effect
     private activeEffect: ActiveEffectState | null = null;
+    private specialCooldown: number = 0;
 
     // Trail Effects
     private trailEffect: {
@@ -151,6 +153,7 @@ export class GameEngine {
              this.difficultyMultiplier = 1;
              this.comboCount = 0;
              this.lives = 3;
+             this.specialCooldown = 0;
              this.callbacks.onLivesUpdate(3);
              this.resetEffects();
         }
@@ -160,6 +163,7 @@ export class GameEngine {
         this.activeEffect = null;
         this.callbacks.onEffectChange(null);
         this.trailEffect = { type: 'normal', timer: 0, color: '' };
+        this.specialCooldown = 0;
     }
 
     public cleanup() {
@@ -345,11 +349,13 @@ export class GameEngine {
             this.lives = Math.min(MAX_LIVES, this.lives + 1);
             this.callbacks.onLivesUpdate(this.lives);
             this.particleSystem.createFloatingText(this.width/2, this.height/2, t.extraLife, '#ff0088');
+            this.specialCooldown = 180;
             return;
         }
         if (type === EffectType.BOMB_TRAP) {
             this.entityManager.spawnBombSwarm();
              this.particleSystem.createFloatingText(this.width/2, this.height/2, t.trap, '#000000');
+             this.specialCooldown = 180;
             return;
         }
         if (type === EffectType.BLAST) {
@@ -363,16 +369,19 @@ export class GameEngine {
             });
             this.callbacks.onScoreUpdate(clearedCount * 5);
              this.particleSystem.createFloatingText(this.width/2, this.height/2, t.blast, '#FF6347');
+             this.specialCooldown = 180;
             return;
         }
         if (type === EffectType.BONUS_POINTS) {
             this.callbacks.onScoreUpdate(50);
             this.particleSystem.createFloatingText(this.width/2, this.height/2, t.bonusPoints, '#FFD700');
+            this.specialCooldown = 180;
             return;
         }
         if (type === EffectType.GOLDEN_SNITCH) {
              // Instant logic handled in slicing score, just adding effect text
              this.particleSystem.createFloatingText(this.width/2, this.height/2, t.caughtIt, '#FFD700');
+             this.specialCooldown = 180;
              return;
         }
 
@@ -430,6 +439,12 @@ export class GameEngine {
                 if (this.activeEffect.timer <= 0) {
                     this.activeEffect = null;
                     this.callbacks.onEffectChange(null);
+                    this.specialCooldown = 180; // Start 3s cooldown after effect ends
+                }
+            } else {
+                // Cooldown for spawning next special
+                if (this.specialCooldown > 0) {
+                    this.specialCooldown--;
                 }
             }
 
@@ -460,7 +475,8 @@ export class GameEngine {
                     this.entityManager.spawn(
                         this.difficulty, 
                         this.difficultyMultiplier,
-                        this.activeEffect ? this.activeEffect.type : EffectType.NONE
+                        this.activeEffect ? this.activeEffect.type : EffectType.NONE,
+                        this.specialCooldown <= 0 // Pass allowSpecial
                     );
                 }
 

@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import GameCanvas from './components/GameCanvas';
 import { GameState, Difficulty, EffectType, ActiveEffectState } from './types';
-import { Play, Trophy, Skull, Globe, Info, CornerUpLeft } from 'lucide-react';
+import { Play, Trophy, Skull, Globe, Info, CornerUpLeft, RotateCcw } from 'lucide-react';
 import { TRANSLATIONS, SPECIAL_FRUITS, BOMB_TYPE } from './constants';
 import { 
     playSliceSound, 
@@ -150,6 +149,15 @@ const App: React.FC = () => {
     playStartSound();
     setScore(0);
     setGameState(GameState.CALIBRATION);
+  };
+
+  const restartGame = () => {
+    ensureAudioContext(); 
+    playStartSound();
+    setScore(0);
+    // Skip calibration for quick restart as user is already positioned
+    setGameState(GameState.PLAYING);
+    showToast(t.go, "text-green-400");
   };
 
   const handleCalibrationComplete = () => {
@@ -356,12 +364,31 @@ const App: React.FC = () => {
            <h2 className="text-8xl font-black text-white mb-2 tracking-tighter drop-shadow-xl">{t.gameOver}</h2>
            <p className="text-white/80 text-3xl mb-12 font-light">{t.score}: <span className="text-yellow-400 font-bold">{score}</span></p>
            
-           <NoseButton 
-              onClick={() => setGameState(GameState.MENU)}
-              cursorPos={cursorPosRef}
-              className="px-16 py-6 bg-white text-black text-2xl font-bold rounded-full shadow-xl"
-              label={t.mainMenu}
-           />
+           <div className="flex gap-6 items-center">
+               <NoseButton 
+                  onClick={restartGame}
+                  cursorPos={cursorPosRef}
+                  className="px-10 py-5 bg-white hover:bg-green-400 text-white text-2xl font-bold rounded-full shadow-xl flex items-center gap-3 border-4 border-green-600/30"
+                  label={
+                      <>
+                        <RotateCcw size={32} strokeWidth={2.5} />
+                        {t.restart}
+                      </>
+                  }
+               />
+
+               <NoseButton 
+                  onClick={() => setGameState(GameState.MENU)}
+                  cursorPos={cursorPosRef}
+                  className="px-10 py-5 bg-white hover:bg-gray-100 text-black text-2xl font-bold rounded-full shadow-xl flex items-center gap-3 border-4 border-gray-300"
+                  label={
+                      <>
+                        <CornerUpLeft size={32} strokeWidth={2.5} />
+                        {t.mainMenu}
+                      </>
+                  }
+               />
+           </div>
         </div>
       )}
     </div>
